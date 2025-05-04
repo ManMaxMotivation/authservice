@@ -28,7 +28,7 @@
 ## 🚀 Запуск
 1. **Склонируйте репозиторий**:
    ```bash
-   git clone https://github.com/ManMaxMotivation/auth-service
+   git clone https://github.com/ManMaxMotivation/authservice
    cd auth-service
    ```
 2. **Запустите приложение**:

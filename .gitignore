@@ -1,6 +1,9 @@
 # Сборка
 target/
 build/
+out/
+compose.yaml/
+Dockerfile/
 
 # IDEA
 .idea/
