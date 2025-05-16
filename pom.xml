@@ -1,64 +1,134 @@
+<!-- 💥 Определяет схему и версию POM-файла для Maven -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- 💥 Указывает версию модели POM (4.0.0 — стандартная для Maven) -->
     <modelVersion>4.0.0</modelVersion>
+
+    <!-- 💥 Уникальный идентификатор группы проекта -->
     <groupId>com.example</groupId>
-    <artifactId>my-springbootapp</artifactId>
+
+    <!-- 💥 Имя артефакта (название проекта) -->
+    <artifactId>my springbootapp</artifactId>
+
+    <!-- 💥 Версия проекта -->
     <version>1.0.0</version>
+
+    <!-- 💥 Тип упаковки (jar — приложение будет собрано в исполняемый JAR-файл) -->
     <packaging>jar</packaging>
+
+    <!-- 💥 Секция свойств для определения констант, используемых в файле -->
     <properties>
+        <!-- Версия Java для компиляции и выполнения -->
         <java.version>17</java.version>
+        <!-- Версия Spring Boot -->
         <spring-boot.version>3.1.0</spring-boot.version>
+        <!-- Версия Lombok -->
         <lombok.version>1.18.24</lombok.version>
+        <!-- Версия исходного кода Java -->
         <maven.compiler.source>17</maven.compiler.source>
+        <!-- Версия целевого байт-кода Java -->
         <maven.compiler.target>17</maven.compiler.target>
+        <!-- Кодировка исходных файлов -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Кодировка отчетов -->
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
+    <!-- 💥 Секция зависимостей, определяющая библиотеки, необходимые для проекта -->
     <dependencies>
+        <!-- 💥 Зависимость для веб-приложения Spring Boot -->
+        <!-- Включает Spring MVC, встроенный Tomcat и поддержку REST API -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
+
+        <!-- 💥 Зависимость для Lombok -->
+        <!-- Упрощает написание кода, генерируя геттеры, сеттеры и т.д. -->
+        <!-- scope=provided: используется только на этапе компиляции -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- 💥 Зависимость для Spring Boot Actuator -->
+        <!-- Предоставляет эндпоинты для мониторинга (health, metrics, prometheus) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
+
+        <!-- 💥 Зависимость для интеграции с Prometheus -->
+        <!-- Позволяет экспортировать метрики из CustomMetricsService -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
             <version>1.11.0</version>
         </dependency>
+
+        <!-- 💥 Зависимость для Swagger/OpenAPI -->
+        <!-- Генерирует документацию API и предоставляет Swagger UI -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.6.0</version>
         </dependency>
+
+        <!-- 💥 Зависимость для JavaFaker -->
+        <!-- Используется для генерации тестовых данных (например, имен, телефонов) -->
         <dependency>
             <groupId>com.github.javafaker</groupId>
             <artifactId>javafaker</artifactId>
             <version>1.0.2</version>
         </dependency>
+
+        <!-- 💥 Зависимость для логирования -->
+        <!-- Logback — реализация SLF4J, используемая в AuthController -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.4.7</version>
         </dependency>
+
+        <!-- 💥 Зависимость для работы с JPA и Hibernate -->
+        <!-- Включает поддержку работы с PostgreSQL через ClientRepository -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <version>3.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- 💥 Драйвер PostgreSQL -->
+        <!-- Необходим для подключения к базе данных PostgreSQL -->
+        <!-- scope=runtime: используется только во время выполнения -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.6.0</version>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
+
+    <!-- 💥 Секция сборки, определяющая, как Maven будет компилировать и собирать проект -->
     <build>
+        <!-- 💥 Настройка ресурсов -->
+        <!-- Указывает, что ресурсы (например, application.properties) находятся в src/main/resources -->
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
+                <!-- Включает фильтрацию для подстановки переменных в ресурсы -->
                 <filtering>true</filtering>
             </resource>
         </resources>
+
+        <!-- 💥 Плагины Maven для выполнения различных задач -->
         <plugins>
+            <!-- 💥 Плагин Spring Boot -->
+            <!-- Создает исполняемый JAR-файл с зависимостями -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -66,29 +136,39 @@
                 <executions>
                     <execution>
                         <goals>
+                            <!-- Перепаковывает JAR для включения всех зависимостей -->
                             <goal>repackage</goal>
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>observability.ObservabilityApplication</mainClass>
+                    <!-- Указывает главный класс приложения -->
+                    <mainClass>com.bankapp.auth.ObservabilityApplication</mainClass>
                 </configuration>
             </plugin>
+
+            <!-- 💥 Плагин для компиляции Java-кода -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
+                    <!-- Версия исходного кода -->
                     <source>${java.version}</source>
+                    <!-- Версия целевого байт-кода -->
                     <target>${java.version}</target>
+                    <!-- Кодировка исходных файлов -->
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
+
+            <!-- 💥 Плагин для обработки ресурсов -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
+                    <!-- Кодировка ресурсов -->
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
