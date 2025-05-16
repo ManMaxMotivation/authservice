@@ -15,7 +15,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger; // Логирование событий
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired; // Аннотация для внедрения зависимостей
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*; // Аннотации для создания REST-эндпоинтов
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -28,7 +30,7 @@ import java.util.Optional;
 public class AuthController {
 
     // Зависимости, которые нужны для работы контроллера
-    private final ClientService clientService; // Сервис для работы с клиентами (регистрация, логин)
+    private final ClientService clientService; // Сервис для работы с клиентами (регистрация, логин). 💥 Здесь происходят обращения к БД через методы сервиса
     private final SessionManager sessionManager; // Управление сессиями (кто вошел, кто вышел)
     private final TimeoutController timeoutController; // Управление задержкой ответа (для нагрузочного тестирования)
     private final CustomMetricsService metricsService; // Сбор пользовательских метрик для Prometheus
@@ -36,6 +38,7 @@ public class AuthController {
     private final Logger log = LoggerFactory.getLogger(AuthController.class); // Логгер для записи событий
 
     // Конструктор с внедрением зависимостей через @Autowired
+    // 💥 Используется для автоматического создания объектов зависимостей Spring'ом
     @Autowired
     public AuthController(ClientService clientService, SessionManager sessionManager,
                           TimeoutController timeoutController, CustomMetricsService metricsService,
@@ -48,7 +51,8 @@ public class AuthController {
     }
 
     // Эндпоинт для регистрации нового пользователя
-    @PostMapping("/register")
+    // 💥 Этот метод косвенно работает с БД через ClientService
+    @PostMapping({"/register"})
     // Документируем эндпоинт в Swagger: описание, пример запроса
     @Operation(
             summary = "Регистрация нового пользователя",
@@ -68,37 +72,45 @@ public class AuthController {
             )
     )
     public Client register(
-            // Параметры запроса, передаваемые в форме
-            @RequestParam @Schema(description = "Полное имя пользователя", example = "Иван Иванов") String fullName,
-            @RequestParam @Schema(description = "Телефон пользователя с +7", example = "+79001112233") String phone,
-            @RequestParam @Schema(description = "Уникальный логин пользователя", example = "user1") String username,
-            @RequestParam @Schema(description = "Пароль", example = "pass1") String password
+            @RequestParam String fullName, // Полное имя пользователя
+            @RequestParam String phone, // Номер телефона
+            @RequestParam String username, // Логин пользователя
+            @RequestParam String password // Пароль пользователя
     ) {
-        // Логируем попытку регистрации
+        // Логируем попытку регистрации для отладки
         log.info("Register attempt for username: {}", username);
-        // Применяем искусственную задержку ответа (для нагрузочного тестирования)
+        // Применяем искусственную задержку (для тестирования)
         timeoutController.applyTimeout("register");
-        // Запоминаем время начала выполнения для метрик
+        // Запоминаем время начала для метрик
         long startTime = System.nanoTime();
 
         try {
-            // Увеличиваем счетчик регистраций (метрика)
+            // 💥 Проверка на дубликат телефона через ClientService (запрос к БД)
+            // Если пользователь с таким телефоном уже есть, выбрасываем исключение
+            if (clientService.existsByPhone(phone)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Пользователь с таким телефоном уже существует: " + phone);
+            }
+
+            // Увеличиваем счетчик регистраций в метриках
             metricsService.incrementRegisterCounter();
-            // Записываем длину имени как метрику (для анализа)
+            // Записываем длину имени как метрику
             metricsService.recordRegisterSummary(fullName.length());
-            // Вызываем сервис для создания нового пользователя
+
+            // 💥 Регистрируем нового пользователя через сервис (здесь данные сохраняются в БД)
             Client client = clientService.register(fullName, phone, username, password);
+
             // Записываем время выполнения регистрации
             metricsService.recordRegisterTimer(System.nanoTime() - startTime);
             // Возвращаем созданного клиента
             return client;
         } finally {
-            // Записываем текущее количество регистраций как gauge (метрика для Prometheus)
+            // Записываем текущее количество регистраций как gauge для Prometheus
             meterRegistry.gauge("auth_register_active", metricsService.getRegisterCount());
         }
     }
 
     // Эндпоинт для входа пользователя в систему
+    // 💥 Этот метод также косвенно работает с БД через ClientService
     @PostMapping("/login")
     // Документируем эндпоинт в Swagger
     @Operation(
@@ -135,7 +147,7 @@ public class AuthController {
             metricsService.incrementLoginCounter();
             // Записываем длину пароля как метрику
             metricsService.recordLoginSummary(password.length());
-            // Проверяем логин и пароль через сервис
+            // 💥 Проверяем логин и пароль через сервис (запрос к БД для поиска клиента)
             Optional<Client> clientOpt = clientService.login(username, password);
             // Записываем время выполнения входа
             metricsService.recordLoginTimer(System.nanoTime() - startTime);
@@ -178,7 +190,7 @@ public class AuthController {
             metricsService.incrementLogoutCounter();
             // Записываем метрику выхода
             metricsService.recordLogoutSummary(1);
-            // Очищаем сессию
+            // Очищаем сессию (БД здесь не затрагивается)
             sessionManager.logout();
             // Записываем время выполнения выхода
             metricsService.recordLogoutTimer(System.nanoTime() - startTime);
@@ -208,7 +220,7 @@ public class AuthController {
             metricsService.incrementIsLoggedCounter();
             // Записываем метрику проверки
             metricsService.recordIsLoggedSummary(1);
-            // Получаем статус сессии
+            // Получаем статус сессии (БД здесь не затрагивается)
             String status = sessionManager.getLoginStatus();
             // Записываем время выполнения
             metricsService.recordIsLoggedTimer(System.nanoTime() - startTime);
@@ -238,7 +250,7 @@ public class AuthController {
             metricsService.incrementGetUserCounter();
             // Записываем метрику запроса
             metricsService.recordGetUserSummary(1);
-            // Получаем текущего пользователя из сессии
+            // Получаем текущего пользователя из сессии (БД здесь не затрагивается)
             Client loggedInClient = sessionManager.getLoggedInClient();
             // Записываем время выполнения
             metricsService.recordGetUserTimer(System.nanoTime() - startTime);
