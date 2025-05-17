@@ -7,7 +7,7 @@
     <groupId>com.example</groupId>
 
     <!-- 💥 Имя артефакта (название проекта) -->
-    <artifactId>my springbootapp</artifactId>
+    <artifactId>myspringbootapp</artifactId>
 
     <!-- 💥 Версия проекта -->
     <version>1.0.0</version>
