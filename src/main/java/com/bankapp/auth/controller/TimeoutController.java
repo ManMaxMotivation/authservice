@@ -25,9 +25,9 @@ public class TimeoutController {
     // Конструктор, вызывается при создании объекта
     public TimeoutController() {
         // Инициализируем стандартные таймауты для действий
-        timeouts.put("login", 1); // Задержка для входа — 1 секунда
-        timeouts.put("register", 2); // Задержка для регистрации — 2 секунды
-        timeouts.put("logout", 2); // Задержка для выхода — 2 секунды
+        timeouts.put("login", 15); // Задержка для входа — 1 секунда
+        timeouts.put("register", 15); // Задержка для регистрации — 2 секунды
+        timeouts.put("logout", 15); // Задержка для выхода — 2 секунды
     }
 
     /**
